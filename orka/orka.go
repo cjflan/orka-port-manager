@@ -1,14 +1,13 @@
 package orka
 
 import (
-	"bytes"
-	"encoding/json"
-	"flag"
-	"fmt"
-	"io"
-	"net/http"
-	"strings"
-	"time"
+    "bytes"
+    "encoding/json"
+    "flag"
+    "fmt"
+    "io"
+    "net/http"
+    "strings"
 )
 
 const API_URL = "http://10.221.188.20" 
@@ -153,37 +152,12 @@ type VMDeployRequest struct {
 }
 type StatusResponse struct {
     Message string `json:"message"`
-    Help    struct {
-    } `json:"help"`
     Errors                  []any `json:"errors"`
     VirtualMachineResources []struct {
         VirtualMachineName string `json:"virtual_machine_name"`
         VMDeploymentStatus string `json:"vm_deployment_status"`
         Status             []struct {
-            Owner                 string `json:"owner"`
-            VirtualMachineName    string `json:"virtual_machine_name"`
-            VirtualMachineID      string `json:"virtual_machine_id"`
-            NodeLocation          string `json:"node_location"`
-            NodeStatus            string `json:"node_status"`
-            VirtualMachineIP      string `json:"virtual_machine_ip"`
-            VncPort               string `json:"vnc_port"`
-            ScreenSharingPort     string `json:"screen_sharing_port"`
-            SSHPort               string `json:"ssh_port"`
-            CPU                   int    `json:"cpu"`
-            Vcpu                  int    `json:"vcpu"`
-            Gpu                   string `json:"gpu"`
-            RAM                   string `json:"RAM"`
-            BaseImage             string `json:"base_image"`
-            Image                 string `json:"image"`
-            ConfigurationTemplate string `json:"configuration_template"`
-            VMStatus              string `json:"vm_status"`
-            IoBoost               bool   `json:"io_boost"`
-            NetBoost              bool   `json:"net_boost"`
-            UseSavedState         bool   `json:"use_saved_state"`
             ReservedPorts         []ReservedPorts `json:"reserved_ports"`
-            CreationTimestamp time.Time `json:"creationTimestamp"`
-            Tag               string    `json:"tag"`
-            TagRequired       bool      `json:"tag_required"`
         } `json:"status"`
     } `json:"virtual_machine_resources"`
 }
@@ -195,31 +169,7 @@ type ReservedPorts struct {
 }
 
 type DeployResponse struct {
-    Message string `json:"message"`
-    Help    struct {
-        StartVirtualMachine            string `json:"start_virtual_machine"`
-        StopVirtualMachine             string `json:"stop_virtual_machine"`
-        ResumeVirtualMachine           string `json:"resume_virtual_machine"`
-        SuspendVirtualMachine          string `json:"suspend_virtual_machine"`
-        DataForVirtualMachineExecTasks struct {
-            OrkaVMName string `json:"orka_vm_name"`
-        } `json:"data_for_virtual_machine_exec_tasks"`
-        VirtualMachineVnc string `json:"virtual_machine_vnc"`
-    } `json:"help"`
-    Errors          []any  `json:"errors"`
-    RAM             string `json:"ram"`
-    Vcpu            string `json:"vcpu"`
-    HostCPU         string `json:"host_cpu"`
-    IP              string `json:"ip"`
-    SSHPort         string `json:"ssh_port"`
-    ScreenSharePort string `json:"screen_share_port"`
     VMID            string `json:"vm_id"`
-    PortWarnings    []any  `json:"port_warnings"`
-    IoBoost         bool   `json:"io_boost"`
-    NetBoost        bool   `json:"net_boost"`
-    UseSavedState   bool   `json:"use_saved_state"`
-    GpuPassthrough  bool   `json:"gpu_passthrough"`
-    VncPort         string `json:"vnc_port"`
 }
 
 func (o *OrkaClient) DeployVM(port int) DeployResponse {
@@ -256,7 +206,7 @@ func (o *OrkaClient) DeployVM(port int) DeployResponse {
     json.Unmarshal(body, &response)
 
     return response
-    
+
 }
 
 func (o *OrkaClient) ReservedPorts(vmid string) []ReservedPorts {
@@ -280,4 +230,4 @@ func (o *OrkaClient) ReservedPorts(vmid string) []ReservedPorts {
     json.Unmarshal(body, &response)
 
     return response.VirtualMachineResources[0].Status[0].ReservedPorts
-    }
+}
