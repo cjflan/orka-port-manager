@@ -1,11 +1,11 @@
 package main
 
 import (
-	"flag"
-	"fmt"
-	"net/http"
+    "flag"
+    "fmt"
+    "net/http"
 
-	"github.com/gammazero/deque"
+    "github.com/gammazero/deque"
 )
 
 func main() {
@@ -25,11 +25,11 @@ func main() {
     }
 
     portQueue := deque.New[int](*port_quanitity)
-    
+
     pqh := PortQueueHandler{
         PortQueue: portQueue,
     }
-    
+
     pqh.init(*starting_port, *port_quanitity)
 
 

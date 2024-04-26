@@ -1,13 +1,13 @@
 package orka
 
 import (
-	"bytes"
-	"encoding/json"
-	"flag"
-	"fmt"
-	"io"
-	"net/http"
-	"strings"
+    "bytes"
+    "encoding/json"
+    "flag"
+    "fmt"
+    "io"
+    "net/http"
+    "strings"
 )
 
 const API_URL = "http://10.221.188.20" 
@@ -20,7 +20,7 @@ type OrkaClient struct {
 func main() {
     email := flag.String("user", "support@macstadium.com", "username of your orka account")
     pass := flag.String("pass" , "", "password for your orka account")
-    
+
     flag.Parse()
 
     if *pass == "" {
@@ -32,21 +32,21 @@ func main() {
     }
     orka.getToken(*email, *pass)
     orka.createConfig()
-    
+
     port := orka.getPort()
 
     orka.DeployVM(port)
 }
 
 type TokenResponse struct {
-	Message string `json:"message"`
-	Errors []any  `json:"errors"`
-	Token  string `json:"token"`
+    Message string `json:"message"`
+    Errors []any  `json:"errors"`
+    Token  string `json:"token"`
 }
 
 type TokenRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+    Email    string `json:"email"`
+    Password string `json:"password"`
 }
 
 func (o *OrkaClient) getToken(email string, password string) {
@@ -126,7 +126,7 @@ func (o *OrkaClient) getPort() int {
 
     res, err := client.Get("127.0.0.1:8080/checkout")
     if err != nil {
-       panic("failed to send request") 
+        panic("failed to send request") 
     }
 
     defer res.Body.Close()
@@ -137,7 +137,7 @@ func (o *OrkaClient) getPort() int {
     if err != nil {
         panic(err)
     }
-    
+
 
     return response.Port
 }

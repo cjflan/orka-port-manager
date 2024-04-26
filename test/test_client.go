@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "io"
+    "net/http"
 )
 
 type TestClient struct {
@@ -39,7 +39,7 @@ func (tc *TestClient) returnPort(p int) {
         Port: p,
     }
     portBytes, _ := json.Marshal(port)
-    
+
     req, _ := http.NewRequest(
         http.MethodPut,
         "http://127.0.0.1:8080/checkin",

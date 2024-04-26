@@ -1,12 +1,12 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"log"
-	"net/http"
+    "encoding/json"
+    "fmt"
+    "log"
+    "net/http"
 
-	"github.com/gammazero/deque"
+    "github.com/gammazero/deque"
 )
 
 type PortQueueHandler struct {
@@ -72,10 +72,10 @@ func (qh *PortQueueHandler) checkin(w http.ResponseWriter, r *http.Request) {
     }
     queue.PushBack(port.Port)
     log.Printf("returned port %d back to queue\n", port.Port)
-    
+
     message := fmt.Sprintf("Port %d returned to queue", port.Port)
     res, _:= json.Marshal(CheckinResponse{
-        Message: message,
+	Message: message,
     })
 
     w.Write(res)
