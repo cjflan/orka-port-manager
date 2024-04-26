@@ -210,7 +210,7 @@ func (o *OrkaClient) DeployVM(port int) DeployResponse {
 }
 
 func (o *OrkaClient) ReservedPorts(vmid string) []ReservedPorts {
-    url := fmt.Sprint(API_URL, "/resources/vm/status/myorkavm")
+    url := fmt.Sprint(API_URL, "/resources/vm/status/", vmid)
     client := o.Client
     req, err := http.NewRequest(http.MethodGet, url, nil)
 
