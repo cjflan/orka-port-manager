@@ -12,4 +12,5 @@ To run the server, run the resulting executable with the following flags:
 ## Endpoints
 
 To check out a port use the `/checkout` endpoint.
+
 To check a port back in use the `/checkin` endpoint. 
