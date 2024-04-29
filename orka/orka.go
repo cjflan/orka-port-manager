@@ -1,4 +1,4 @@
-package orka
+package main
 
 import (
     "bytes"
@@ -6,8 +6,8 @@ import (
     "flag"
     "fmt"
     "io"
+    "log"
     "net/http"
-    "strings"
 )
 
 const API_URL = "http://10.221.188.20" 
@@ -36,6 +36,8 @@ func main() {
     port := orka.getPort()
 
     vm := orka.DeployVM(port)
+    log.Println("vmid: ", vm.VMID)
+    log.Println("VM deployed, checking ports")
     reservedPorts := orka.ReservedPorts(vm.VMID)
 
     fmt.Printf("reservedPorts: %v\n", reservedPorts)
@@ -86,18 +88,29 @@ func (o *OrkaClient) getToken(email string, password string) {
     o.token = bearerToken
 }
 
+type ConfigRequest struct {
+    OrkaVMName    string `json:"orka_vm_name"`
+    OrkaBaseImage string `json:"orka_base_image"`
+    OrkaImage     string `json:"orka_image"`
+    OrkaCPUCore   int    `json:"orka_cpu_core"`
+    VcpuCount     int    `json:"vcpu_count"`
+}
+
 func (o *OrkaClient) createConfig() {
     client := o.Client
-    payload := strings.NewReader(`{
-        "orka_vm_name": "port-test",
-        "orka_base_image": "90gbsonomassh.img",
-        "orka_image": "port-test",
-        "orka_cpu_core": 3,
-        "vcpu_count": 3,
-        }`)
+
+    vmConfig := ConfigRequest{
+        OrkaVMName: "port-test",
+        OrkaImage: "port-test",
+        OrkaBaseImage: "90GBVenturaSSH.img",
+        OrkaCPUCore: 6,
+        VcpuCount: 6,
+    }
+    configBytes, _ := json.Marshal(vmConfig)
+    request := bytes.NewReader(configBytes)
 
     url := fmt.Sprint(API_URL, "/resources/vm/create")
-    req, err := http.NewRequest(http.MethodPost, url, payload)
+    req, err := http.NewRequest(http.MethodPost, url, request)
 
     if err != nil {
         fmt.Println(err)
@@ -114,7 +127,8 @@ func (o *OrkaClient) createConfig() {
     defer res.Body.Close()
 
     if res.StatusCode != http.StatusCreated {
-        fmt.Println("failed to create config: ", res.Status)
+        e := fmt.Sprintf("failed to create config: %s", res.Status)
+        panic(e)
     }
 
 }
@@ -127,9 +141,10 @@ type PortResponse struct {
 func (o *OrkaClient) getPort() int {
     client := o.Client
 
-    res, err := client.Get("127.0.0.1:8080/checkout")
+    res, err := client.Get("http://127.0.0.1:8080/checkout")
     if err != nil {
-        panic("failed to send request") 
+        e := fmt.Sprint("failede to send request: ", err)
+        panic(e) 
     }
 
     defer res.Body.Close()
@@ -148,7 +163,7 @@ func (o *OrkaClient) getPort() int {
 type VMDeployRequest struct {
     OrkaVMName string `json:"orka_vm_name"`
     OrkaNodeName string `json:"orka_node_name"` 
-    ReservedPorts string `json:"reserved_ports"`
+    ReservedPorts []string `json:"reserved_ports"`
 }
 type StatusResponse struct {
     Message string `json:"message"`
@@ -170,13 +185,15 @@ type ReservedPorts struct {
 
 type DeployResponse struct {
     VMID            string `json:"vm_id"`
+    Errors []any `json:"errors"`
 }
 
 func (o *OrkaClient) DeployVM(port int) DeployResponse {
     client := o.Client
     url := fmt.Sprint(API_URL, "/resources/vm/deploy")
+    var ports []string
+    ports = append(ports, fmt.Sprint("8080:", port))
 
-    ports := fmt.Sprint("8080:", port)
 
     vmDeploy := VMDeployRequest{
         OrkaVMName: "port-test",
@@ -195,15 +212,24 @@ func (o *OrkaClient) DeployVM(port int) DeployResponse {
     req.Header.Add("Content-Type", "application/json")
     req.Header.Add("Authorization", o.token)
 
+    log.Println("deploying vm")
     res, err := client.Do(req)
     if err != nil {
         panic(err)
     }
+
+    log.Println("VM status: ", res.Status)
     defer res.Body.Close()
 
+    log.Println("parising response")
     var response DeployResponse
     body, err := io.ReadAll(res.Body)
     json.Unmarshal(body, &response)
+
+    if res.StatusCode != http.StatusOK {
+        e := fmt.Sprintf("vm not created: %s, %v", res.Status, response.Errors)
+        panic(e)
+    }
 
     return response
 
