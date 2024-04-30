@@ -37,7 +37,7 @@ func (qh *PortQueueHandler) checkout(w http.ResponseWriter, r *http.Request) {
 	}
 	resBytes, _ := json.Marshal(res)
 	w.Write(resBytes) 
-	log.Println("no more ports in queue")	
+	log.Println("No ports left in queue")	
 	return
     }
 
@@ -67,11 +67,11 @@ func (qh *PortQueueHandler) checkin(w http.ResponseWriter, r *http.Request) {
 	})
 	w.Write(res)
 
-	log.Printf("invalid request: %s\n", err)
+	log.Println(e)
 	return
     }
     queue.PushBack(port.Port)
-    log.Printf("returned port %d back to queue\n", port.Port)
+    log.Printf("Port %d returned to queue\n", port.Port)
 
     message := fmt.Sprintf("Port %d returned to queue", port.Port)
     res, _:= json.Marshal(CheckinResponse{

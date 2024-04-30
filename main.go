@@ -1,11 +1,11 @@
 package main
 
 import (
-    "flag"
-    "fmt"
-    "net/http"
+	"flag"
+	"log"
+	"net/http"
 
-    "github.com/gammazero/deque"
+	"github.com/gammazero/deque"
 )
 
 func main() {
@@ -13,8 +13,6 @@ func main() {
     starting_port := flag.Int("start", 9000, "Port to start port range from (default: 9000)")
 
     flag.Parse()
-
-    fmt.Println("port quanitity: ", *port_quanitity)
 
     if *port_quanitity <= 0 {
         panic("number of ports must be postitve")
@@ -24,6 +22,7 @@ func main() {
         panic("starting port + number of ports must not exceed the maximum port (65535)")
     }
 
+    log.Printf("Creating queue with %d ports\n", *port_quanitity)
     portQueue := deque.New[int](*port_quanitity)
 
     pqh := PortQueueHandler{
@@ -31,11 +30,6 @@ func main() {
     }
 
     pqh.init(*starting_port, *port_quanitity)
-
-
-    http.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-        fmt.Fprint(w, "world")
-    })
 
     http.HandleFunc("/checkout", pqh.checkout)
     http.HandleFunc("/checkin", pqh.checkin)
