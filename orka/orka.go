@@ -1,13 +1,15 @@
 package main
 
 import (
-    "bytes"
-    "encoding/json"
-    "flag"
-    "fmt"
-    "io"
-    "log"
-    "net/http"
+	"bytes"
+	"encoding/json"
+	"flag"
+	"fmt"
+	"io"
+	"log"
+	"math/rand"
+	"net/http"
+	"time"
 )
 
 const API_URL = "http://10.221.188.20" 
@@ -33,14 +35,25 @@ func main() {
     orka.getToken(*email, *pass)
     orka.createConfig()
 
-    port := orka.getPort()
+    for i := 0; i < 10; i++ {
+        go func() {
+            port := orka.getPort()
+            log.Println("checked out port ", port)
 
-    vm := orka.DeployVM(port)
-    log.Println("vmid: ", vm.VMID)
-    log.Println("VM deployed, checking ports")
-    reservedPorts := orka.ReservedPorts(vm.VMID)
+            vm := orka.DeployVM(port)
 
-    fmt.Printf("reservedPorts: %v\n", reservedPorts)
+            reservedPorts := orka.ReservedPorts(vm.VMID)
+            log.Printf("vmid: %s   port mapping: %v\n", vm.VMID, reservedPorts[3])
+
+            time.Sleep(time.Second)
+
+            orka.DeleteVM(vm.VMID)
+            orka.ReturnPort(port)
+        }()
+        sleepTime := time.Duration(1 + rand.Intn(4)) * time.Second
+        time.Sleep(sleepTime)
+    }
+
 }
 
 type TokenResponse struct {
@@ -143,7 +156,7 @@ func (o *OrkaClient) getPort() int {
 
     res, err := client.Get("http://127.0.0.1:8080/checkout")
     if err != nil {
-        e := fmt.Sprint("failede to send request: ", err)
+        e := fmt.Sprint("failed to send request: ", err)
         panic(e) 
     }
 
@@ -158,6 +171,41 @@ func (o *OrkaClient) getPort() int {
 
 
     return response.Port
+}
+
+type CheckinRequest struct {
+    Port int
+}
+
+func (o *OrkaClient) ReturnPort(port int) {
+    client := o.Client
+
+    checkinRequest := CheckinRequest{
+        Port: port,
+    }
+
+    reqBytes, _ := json.Marshal(checkinRequest)
+    req, _ := http.NewRequest(
+        http.MethodPost,
+        "http://127.0.0.1:8080/checkin",
+        bytes.NewReader(reqBytes),
+        )
+    req.Header.Add("Content-Type", "application/json")
+    res, err := client.Do(req)
+    if err != nil {
+        e := fmt.Sprint("Port return failed")
+        panic(e)
+    }
+
+    defer res.Body.Close()
+
+    if res.StatusCode != http.StatusOK {
+        e := fmt.Sprint("failed to return port")
+        panic(e)
+    }
+
+    log.Printf("port %d returned to queue", port)
+
 }
 
 type VMDeployRequest struct {
@@ -203,7 +251,8 @@ func (o *OrkaClient) DeployVM(port int) DeployResponse {
     reqBytes, _ := json.Marshal(vmDeploy)
     req, err := http.NewRequest(
         http.MethodPost,
-        url, bytes.NewReader(reqBytes),
+        url, 
+        bytes.NewReader(reqBytes),
         )
 
     if err != nil {
@@ -212,16 +261,13 @@ func (o *OrkaClient) DeployVM(port int) DeployResponse {
     req.Header.Add("Content-Type", "application/json")
     req.Header.Add("Authorization", o.token)
 
-    log.Println("deploying vm")
     res, err := client.Do(req)
     if err != nil {
         panic(err)
     }
 
-    log.Println("VM status: ", res.Status)
     defer res.Body.Close()
 
-    log.Println("parising response")
     var response DeployResponse
     body, err := io.ReadAll(res.Body)
     json.Unmarshal(body, &response)
@@ -256,4 +302,40 @@ func (o *OrkaClient) ReservedPorts(vmid string) []ReservedPorts {
     json.Unmarshal(body, &response)
 
     return response.VirtualMachineResources[0].Status[0].ReservedPorts
+}
+
+type VMDeleteRequest struct {
+	OrkaVMName   string `json:"orka_vm_name"`
+}
+
+func (o *OrkaClient) DeleteVM(vmid string) {
+    url := fmt.Sprint(API_URL, "/resources/vm/delete")
+
+    client := o.Client
+    vmDelete := VMDeleteRequest{
+        OrkaVMName: vmid,
+    }
+    reqBytes, _ := json.Marshal(vmDelete)
+    req, _ := http.NewRequest(
+        http.MethodDelete,
+        url,
+        bytes.NewReader(reqBytes),
+        ) 
+
+    req.Header.Add("Content-Type", "application/json")
+    req.Header.Add("Authorization", o.token)
+
+    res, err := client.Do(req)
+    if err != nil {
+        e := fmt.Sprint("failed to delete vm: ", err)
+        panic(e)
+    }
+    defer res.Body.Close()
+    
+    if res.StatusCode != http.StatusOK {
+        e := fmt.Sprint("failed to delete vm: ", res.Status)
+        panic(e)
+    }
+
+
 }
