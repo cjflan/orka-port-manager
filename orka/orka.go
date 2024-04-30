@@ -33,7 +33,7 @@ func main() {
         Client: http.Client{},
     }
     orka.getToken(*email, *pass)
-    orka.createConfig()
+    orka.CreateConfig()
 
     for i := 0; i < 10; i++ {
         go func() {
@@ -109,7 +109,7 @@ type ConfigRequest struct {
     VcpuCount     int    `json:"vcpu_count"`
 }
 
-func (o *OrkaClient) createConfig() {
+func (o *OrkaClient) CreateConfig() {
     client := o.Client
 
     vmConfig := ConfigRequest{

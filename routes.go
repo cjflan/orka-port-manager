@@ -5,13 +5,7 @@ import (
     "fmt"
     "log"
     "net/http"
-
-    "github.com/gammazero/deque"
 )
-
-type PortQueueHandler struct {
-    PortQueue *deque.Deque[int]
-}
 
 type CheckoutResponse struct {
     Port int `json:"port"`
